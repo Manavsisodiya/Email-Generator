@@ -7,11 +7,16 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// The CORS fix that successfully opened the door!
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type'] 
+}));
 app.use(express.json());
 
-// Initialize the Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize the NEW Gemini SDK
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
@@ -31,12 +36,11 @@ Tone: ${tone}
 Make them clean and ready to send.
 `;
 
-    // Choose the fast, free tier model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    // Generate the content
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    // The new syntax for calling Gemini 2.5 Flash
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
 
     res.json({
       result: response.text,
@@ -49,7 +53,7 @@ Make them clean and ready to send.
   }
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
