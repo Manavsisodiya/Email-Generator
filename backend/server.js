@@ -6,11 +6,13 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
 const app = express();
-
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type'] 
+}));
 app.use(express.json());
 
-// Initialize the Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.get("/", (req, res) => {
@@ -31,10 +33,8 @@ Tone: ${tone}
 Make them clean and ready to send.
 `;
 
-    // Choose the fast, free tier model
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    // Generate the content
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
