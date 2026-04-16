@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-// The CORS fix that successfully opened the door!
 app.use(cors({
   origin: '*', 
   methods: ['GET', 'POST', 'OPTIONS'], 
@@ -15,7 +14,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Initialize the NEW Gemini SDK
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.get("/", (req, res) => {
@@ -26,17 +24,20 @@ app.post("/generate", async (req, res) => {
   const { name, desc, tone } = req.body;
 
   try {
+    // THE FIX: A strict, bulletproof prompt structure
     const prompt = `
-Write 5 email replies.
-
+Write exactly 5 different email replies based on the following:
 Receiver: ${name}
 Context: ${desc}
 Tone: ${tone}
 
-Make them clean and ready to send.
+STRICT RULES:
+1. DO NOT include any introductory text like "Here are your emails".
+2. DO NOT include any concluding text.
+3. Separate each of the 5 emails using EXACTLY this string: |||
+4. Provide only the email subjects and bodies without markdown bolding.
 `;
 
-    // The new syntax for calling Gemini 2.5 Flash
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -47,7 +48,6 @@ Make them clean and ready to send.
     });
 
   } catch (err) {
-    // If it fails again, this will print the EXACT reason in your Render Logs
     console.error("Gemini API Error:", err);
     res.status(500).json({ error: "Error generating emails" });
   }
