@@ -32,7 +32,7 @@ Make them clean and ready to send.
 `;
 
     // Choose the fast, free tier model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Generate the content
     const result = await model.generateContent(prompt);
