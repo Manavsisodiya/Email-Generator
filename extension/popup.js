@@ -1,4 +1,4 @@
-const SERVER_URL = "https://email-generator-api-wl1l.onrender.com"; 
+const SERVER_URL = "https://email-generator-api-epbf.onrender.com"; 
 
 document.getElementById("generate").onclick = async () => {
   const name = document.getElementById("name").value;
