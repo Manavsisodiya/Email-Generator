@@ -1,6 +1,4 @@
-// NOTE: When you deploy to Render, change this to your Render URL.
-// Example: const SERVER_URL = "https://your-app-name.onrender.com";
-const SERVER_URL = "http://localhost:5001"; 
+const SERVER_URL = "https://email-generator-api-wl1l.onrender.com"; 
 
 document.getElementById("generate").onclick = async () => {
   const name = document.getElementById("name").value;

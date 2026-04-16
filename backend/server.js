@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -10,9 +10,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize the Gemini API
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
@@ -32,22 +31,23 @@ Tone: ${tone}
 Make them clean and ready to send.
 `;
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-    });
+    // Choose the fast, free tier model
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Generate the content
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
 
     res.json({
-      result: response.choices[0].message.content,
+      result: responseText,
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Gemini API Error:", err);
     res.status(500).json({ error: "Error generating emails" });
   }
 });
 
-// CRITICAL FIX FOR RENDER: Use process.env.PORT
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
