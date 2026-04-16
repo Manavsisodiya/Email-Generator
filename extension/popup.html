@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Email Generator</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0b0f19;
+  color: white;
+  width: 320px;
+}
+
+.container {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(20, 25, 40, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.icon {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+p {
+  margin: 0;
+  font-size: 11px;
+  color: #aaa;
+}
+
+label {
+  font-size: 12px;
+  margin-top: 10px;
+  display: block;
+}
+
+input, textarea, select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #111827;
+  color: white;
+  outline: none;
+}
+
+textarea {
+  resize: none;
+}
+
+button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.03);
+}
+
+#output {
+  margin-top: 15px;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.footer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 10px;
+  color: #777;
+}
+</style>
+
+</head>
+
+<body>
+<div class="container">
+  
+  <div class="header">
+    <div class="icon">✉️</div>
+    <div>
+      <h2>AI Email Generator</h2>
+      <p>Craft perfect emails instantly</p>
+    </div>
+  </div>
+
+  <label>Receiver Name</label>
+  <input id="name" placeholder="John Smith"/>
+
+  <label>Describe your email</label>
+  <textarea id="desc" rows="3" placeholder="I want to follow up..."></textarea>
+
+  <label>Tone</label>
+  <select id="tone">
+    <option>Professional</option>
+    <option>Casual</option>
+    <option>Friendly</option>
+  </select>
+
+  <button id="generate">Generate Emails</button>
+
+  <div id="output"></div>
+
+  <div class="footer">
+    Powered by AI • Built with precision
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

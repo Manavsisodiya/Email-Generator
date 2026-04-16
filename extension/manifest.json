@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "AI Email Generator",
+  "version": "2.0",
+  "description": "Generate emails instantly",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:5000/*"]
+}
