@@ -20,11 +20,9 @@ app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
-// --- THE NEW STREAMING ROUTE ---
 app.post("/stream", async (req, res) => {
   const { name, desc, tone } = req.body;
 
-  // Set the headers required for Server-Sent Events (Streaming)
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Transfer-Encoding', 'chunked');
 
@@ -42,21 +40,19 @@ STRICT RULES:
 4. Provide only the email subjects and bodies.
 `;
 
-    // Use generateContentStream instead of generateContent
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
 
-    // Loop through the chunks as Google generates them and pipe them to the Chrome Extension
     for await (const chunk of responseStream) {
         if (chunk.text) {
             res.write(chunk.text);
         }
     }
     
-    res.end(); // Tell the frontend we are completely done
-
+    res.end(); 
+    
   } catch (err) {
     console.error("Gemini API Error:", err);
     res.status(500).write("Error generating emails");
