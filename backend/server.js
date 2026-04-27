@@ -20,36 +20,47 @@ app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
-app.post("/generate", async (req, res) => {
+// --- THE NEW STREAMING ROUTE ---
+app.post("/stream", async (req, res) => {
   const { name, desc, tone } = req.body;
 
+  // Set the headers required for Server-Sent Events (Streaming)
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Transfer-Encoding', 'chunked');
+
   try {
-    // THE FIX: A strict, bulletproof prompt structure
     const prompt = `
-Write exactly 5 different email replies based on the following:
+Write exactly 3 concise, different email replies based on the following:
 Receiver: ${name}
 Context: ${desc}
 Tone: ${tone}
 
 STRICT RULES:
-1. DO NOT include any introductory text like "Here are your emails".
+1. DO NOT include any introductory text.
 2. DO NOT include any concluding text.
-3. Separate each of the 5 emails using EXACTLY this string: |||
-4. Provide only the email subjects and bodies without markdown bolding.
+3. Separate each of the 3 emails using EXACTLY this string: |||
+4. Provide only the email subjects and bodies.
 `;
 
-    const response = await ai.models.generateContent({
+    // Use generateContentStream instead of generateContent
+    const responseStream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
 
-    res.json({
-      result: response.text,
-    });
+    // Loop through the chunks as Google generates them and pipe them to the Chrome Extension
+    for await (const chunk of responseStream) {
+        if (chunk.text) {
+            res.write(chunk.text);
+        }
+    }
+    
+    res.end(); // Tell the frontend we are completely done
 
   } catch (err) {
     console.error("Gemini API Error:", err);
-    res.status(500).json({ error: "Error generating emails" });
+    res.status(500).write("Error generating emails");
+    res.end();
   }
 });
 
