@@ -16,44 +16,38 @@ app.use(express.json());
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-app.get("/", (req, res) => {
-  res.send("API is running 🚀");
-});
-
 app.post("/generate", async (req, res) => {
   const { name, desc, tone } = req.body;
 
   try {
     const prompt = `
-Write exactly 3 distinct email replies based on the following:
+Write exactly 3 distinct, professional email replies based on:
 Receiver: ${name}
 Context: ${desc}
 Tone: ${tone}
 
-CRITICAL INSTRUCTION:
-You MUST return your answer strictly as a valid JSON array of 3 strings. 
-Do not include any introductory text. Do not use markdown outside of the JSON block.
-
-EXAMPLE FORMAT:
-[
-  "Subject: First Idea\n\nDear Name,\n\nBody here...",
-  "Subject: Second Idea\n\nHi Name,\n\nBody here...",
-  "Subject: Third Idea\n\nHello Name,\n\nBody here..."
-]
+STRICT RULES:
+1. Return the output ONLY as a valid JSON array of 3 strings.
+2. Each string must contain a Subject line and the Email Body.
+3. Use \\n for new lines within the strings.
+4. DO NOT include any text outside of the JSON array.
+5. DO NOT use markdown code blocks like \`\`\`json.
 `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      }
     });
 
-    let cleanText = response.text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const emailArray = JSON.parse(cleanText);
-
+    const emailArray = JSON.parse(response.text);
     res.json({ result: emailArray });
 
   } catch (err) {
-    res.status(500).json({ error: "Error generating emails" });
+    console.error("BACKEND ERROR:", err);
+    res.status(500).json({ error: "Generation failed" });
   }
 });
 
