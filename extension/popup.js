@@ -1,7 +1,6 @@
 const SERVER_URL = "https://email-generator-api-epbf.onrender.com"; 
 let currentUserEmail = null;
 
-
 document.getElementById('login-btn').onclick = () => {
   chrome.identity.getAuthToken({ interactive: true }, function(token) {
     if (chrome.runtime.lastError) {
@@ -13,16 +12,11 @@ document.getElementById('login-btn').onclick = () => {
       .then(response => response.json())
       .then(userInfo => {
         currentUserEmail = userInfo.email;
-        
         document.getElementById('login-btn').style.display = 'none';
         document.getElementById('user-profile').style.display = 'flex';
         document.getElementById('user-email').innerText = userInfo.name;
         document.getElementById('user-avatar').src = userInfo.picture;
         document.getElementById('view-history-btn').style.display = 'block';
-      })
-      .catch(err => {
-          console.error("Error fetching user info:", err);
-          alert("Could not load user profile.");
       });
   });
 };
@@ -34,24 +28,15 @@ document.getElementById('logout-btn').onclick = () => {
   document.getElementById('view-history-btn').style.display = 'none';
 };
 
-
-
 function saveEmailToHistory(emailText) {
   if (!currentUserEmail) return; 
   const storageKey = `history_${currentUserEmail}`;
   chrome.storage.local.get([storageKey], function(result) {
     let history = result[storageKey] || [];
-    
-    history.unshift({ 
-        text: emailText, 
-        date: new Date().toLocaleDateString() 
-    }); 
-    
+    history.unshift({ text: emailText, date: new Date().toLocaleDateString() }); 
     chrome.storage.local.set({ [storageKey]: history });
   });
 }
-
-
 
 document.getElementById("generate").onclick = async () => {
   const name = document.getElementById("name").value;
@@ -67,66 +52,28 @@ document.getElementById("generate").onclick = async () => {
   }
 
   generateBtn.disabled = true; 
-  generateBtn.innerText = "⏳ Connecting...";
-  outputContainer.innerHTML = ""; 
-  slider.classList.add("show-results"); // Slide over immediately!
+  generateBtn.innerText = "⏳ Generating... Please wait";
 
   try {
-    const res = await fetch(`${SERVER_URL}/stream`, {
+    const res = await fetch(`${SERVER_URL}/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, desc, tone })
     });
 
     if (!res.ok) throw new Error(`Server status: ${res.status}`);
-
-    generateBtn.innerText = "✨ Generating...";
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder("utf-8");
     
-    let currentEmailText = ""; // The safe buffer
-    let currentCard = createNewCardUI(outputContainer); 
-    let allGeneratedEmails = []; 
+    const data = await res.json();
+    const emailsArray = data.result; 
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      let chunk = decoder.decode(value, { stream: true });
-      chunk = chunk.replace(/\*\*/g, '').replace(/###/g, '');
+    outputContainer.innerHTML = ""; 
+    slider.classList.add("show-results");
 
-     
-      currentEmailText += chunk;
-
-     
-      if (currentEmailText.includes('|||')) {
-        const parts = currentEmailText.split('|||');
-        
-
-        currentCard.textDiv.innerText = parts[0].trim();
-        allGeneratedEmails.push(parts[0].trim());
-        
-        
-        currentCard = createNewCardUI(outputContainer);
-        
-       
-        currentEmailText = parts.slice(1).join('|||'); 
-        currentCard.textDiv.innerText = currentEmailText;
-        
-      } else {
-       
-        currentCard.textDiv.innerText = currentEmailText.trim();
-      }
-    }
-
-   
-    if (currentEmailText.trim().length > 0) {
-        allGeneratedEmails.push(currentEmailText.trim());
-    }
-
-    
-    allGeneratedEmails.forEach(email => saveEmailToHistory(email));
+    emailsArray.forEach((emailText) => {
+        saveEmailToHistory(emailText);
+        const cardUI = createNewCardUI(outputContainer, emailText);
+        typeOutText(cardUI.textDiv, emailText, 10);
+    });
 
     generateBtn.disabled = false;
     generateBtn.innerText = "Generate Emails";
@@ -134,13 +81,24 @@ document.getElementById("generate").onclick = async () => {
   } catch (err) {
     generateBtn.disabled = false;
     generateBtn.innerText = "Generate Emails";
-    console.error("Streaming Error:", err);
-    alert(`System Error: ${err.message}`);
+    alert(`System Error: Ensure your backend is running and you used valid JSON.`);
   }
 };
 
+function typeOutText(element, fullText, speed) {
+    let i = 0;
+    element.innerText = "";
+    function type() {
+        if (i < fullText.length) {
+            element.innerText += fullText.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    type();
+}
 
-function createNewCardUI(container) {
+function createNewCardUI(container, fullText) {
   const card = document.createElement("div");
   card.className = "email-card";
   
@@ -155,7 +113,7 @@ function createNewCardUI(container) {
   gmailBtn.innerText = "📤 Draft in Gmail";
   gmailBtn.onclick = () => {
     let subject = "New Email";
-    let bodyText = textDiv.innerText;
+    let bodyText = fullText; 
     const subjectMatch = bodyText.match(/Subject:\s*(.*)/i);
     if (subjectMatch) { 
         subject = subjectMatch[1].trim(); 
@@ -169,7 +127,7 @@ function createNewCardUI(container) {
   copyBtn.className = "action-btn";
   copyBtn.innerText = "📋 Copy";
   copyBtn.onclick = () => { 
-      navigator.clipboard.writeText(textDiv.innerText); 
+      navigator.clipboard.writeText(fullText); 
       copyBtn.innerText = "✅ Copied!"; 
       copyBtn.classList.add("success");
       setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
@@ -184,7 +142,6 @@ function createNewCardUI(container) {
   return { card, textDiv }; 
 }
 
-
 document.getElementById("back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-results");
 };
@@ -192,7 +149,6 @@ document.getElementById("back-btn").onclick = () => {
 document.getElementById("history-back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-history");
 };
-
 
 document.getElementById('view-history-btn').onclick = () => {
   const historyContainer = document.getElementById("history-container");
@@ -227,21 +183,16 @@ document.getElementById('view-history-btn').onclick = () => {
             navigator.clipboard.writeText(item.text); 
             copyBtn.innerText = "✅ Copied!"; 
             copyBtn.classList.add("success");
-            setTimeout(() => {
-                copyBtn.innerText = "📋 Copy";
-                copyBtn.classList.remove("success");
-            }, 2000); 
+            setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
         };
         
         copyWrapper.appendChild(copyBtn);
-        
         card.appendChild(dateStr);
         card.appendChild(textDiv);
         card.appendChild(copyWrapper);
         historyContainer.appendChild(card);
       });
     }
-    
     document.getElementById("slider").classList.add("show-history");
   });
 };
