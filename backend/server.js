@@ -20,46 +20,40 @@ app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
-app.post("/stream", async (req, res) => {
+app.post("/generate", async (req, res) => {
   const { name, desc, tone } = req.body;
-
-  res.setHeader('Content-Type', 'text/plain');
-  res.setHeader('Transfer-Encoding', 'chunked');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); 
 
   try {
     const prompt = `
-Write exactly 3 concise, different email replies based on the following:
+Write exactly 3 distinct email replies based on the following:
 Receiver: ${name}
 Context: ${desc}
 Tone: ${tone}
 
-STRICT RULES:
-1. DO NOT include any introductory text.
-2. DO NOT include any concluding text.
-3. Separate each of the 3 emails using EXACTLY this string: |||
-4. Provide only the email subjects and bodies.
+CRITICAL INSTRUCTION:
+You MUST return your answer strictly as a valid JSON array of 3 strings. 
+Do not include any introductory text. Do not use markdown outside of the JSON block.
+
+EXAMPLE FORMAT:
+[
+  "Subject: First Idea\n\nDear Name,\n\nBody here...",
+  "Subject: Second Idea\n\nHi Name,\n\nBody here...",
+  "Subject: Third Idea\n\nHello Name,\n\nBody here..."
+]
 `;
 
-    const responseStream = await ai.models.generateContentStream({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
 
-    for await (const chunk of responseStream) {
-        if (chunk.text) {
-            res.write(chunk.text);
-        }
-    }
-    
-    res.end(); 
-    
+    let cleanText = response.text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const emailArray = JSON.parse(cleanText);
+
+    res.json({ result: emailArray });
+
   } catch (err) {
-    console.error("Gemini API Error:", err);
-    res.status(500).write("Error generating emails");
-    res.end();
+    res.status(500).json({ error: "Error generating emails" });
   }
 });
 
