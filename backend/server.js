@@ -23,7 +23,6 @@ app.get("/", (req, res) => {
 app.post("/stream", async (req, res) => {
   const { name, desc, tone } = req.body;
 
-  
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Transfer-Encoding', 'chunked');
   res.setHeader('Cache-Control', 'no-cache');
@@ -39,35 +38,6 @@ Tone: ${tone}
 
 STRICT RULES:
 1. DO NOT include any introductory text.
-2. DO NOT include any concluding text.
-3. Separate each of the 3 emails using EXACTLY this string: |||
-4. Provide only the email subjects and bodies.
-`;
-
-    const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-
-    for await (const chunk of responseStream) {
-        if (chunk.text) {
-            res.write(chunk.text);
-        }
-    }
-    
-    res.end(); 
-    
-  } catch (err) {
-    console.error("Gemini API Error:", err);
-    res.status(500).write("Error generating emails");
-    res.end();
-  }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});1. DO NOT include any introductory text.
 2. DO NOT include any concluding text.
 3. Separate each of the 3 emails using EXACTLY this string: |||
 4. Provide only the email subjects and bodies.
