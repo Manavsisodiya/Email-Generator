@@ -48,11 +48,11 @@ document.getElementById("generate").onclick = async () => {
   const generateBtn = document.getElementById("generate");
 
   if (!name || !desc) {
-    alert("Please fill in both the Receiver Name and Description fields."); return;
+    alert("Please fill in both fields."); return;
   }
 
   generateBtn.disabled = true; 
-  generateBtn.innerText = "⏳ Generating... Please wait";
+  generateBtn.innerText = "Generating... Please wait";
 
   try {
     const res = await fetch(`${SERVER_URL}/generate`, {
@@ -61,7 +61,7 @@ document.getElementById("generate").onclick = async () => {
       body: JSON.stringify({ name, desc, tone })
     });
 
-    if (!res.ok) throw new Error(`Server status: ${res.status}`);
+    if (!res.ok) throw new Error("Server Error");
     
     const data = await res.json();
     const emailsArray = data.result; 
@@ -81,7 +81,7 @@ document.getElementById("generate").onclick = async () => {
   } catch (err) {
     generateBtn.disabled = false;
     generateBtn.innerText = "Generate Emails";
-    alert(`System Error: Ensure your backend is running and you used valid JSON.`);
+    alert("Error: " + err.message);
   }
 };
 
@@ -101,16 +101,14 @@ function typeOutText(element, fullText, speed) {
 function createNewCardUI(container, fullText) {
   const card = document.createElement("div");
   card.className = "email-card";
-  
   const textDiv = document.createElement("div");
   textDiv.className = "email-text";
-  
   const copyWrapper = document.createElement("div");
   copyWrapper.className = "copy-wrapper";
 
   const gmailBtn = document.createElement("button");
   gmailBtn.className = "action-btn";
-  gmailBtn.innerText = "📤 Draft in Gmail";
+  gmailBtn.innerText = "Draft in Gmail";
   gmailBtn.onclick = () => {
     let subject = "New Email";
     let bodyText = fullText; 
@@ -125,12 +123,12 @@ function createNewCardUI(container, fullText) {
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "action-btn";
-  copyBtn.innerText = "📋 Copy";
+  copyBtn.innerText = "Copy";
   copyBtn.onclick = () => { 
       navigator.clipboard.writeText(fullText); 
-      copyBtn.innerText = "✅ Copied!"; 
+      copyBtn.innerText = "Copied!"; 
       copyBtn.classList.add("success");
-      setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
+      setTimeout(() => { copyBtn.innerText = "Copy"; copyBtn.classList.remove("success"); }, 2000); 
   };
 
   copyWrapper.appendChild(gmailBtn);
@@ -138,7 +136,6 @@ function createNewCardUI(container, fullText) {
   card.appendChild(textDiv);
   card.appendChild(copyWrapper);
   container.appendChild(card);
-  
   return { card, textDiv }; 
 }
 
@@ -153,39 +150,32 @@ document.getElementById("history-back-btn").onclick = () => {
 document.getElementById('view-history-btn').onclick = () => {
   const historyContainer = document.getElementById("history-container");
   historyContainer.innerHTML = ""; 
-  
   const storageKey = `history_${currentUserEmail}`;
   chrome.storage.local.get([storageKey], function(result) {
     let history = result[storageKey] || [];
-    
     if (history.length === 0) {
-      historyContainer.innerHTML = "<p style='text-align:center; color:#aaa; font-size:12px; margin-top: 20px;'>No saved emails yet!<br>Generate some to see them here.</p>";
+      historyContainer.innerHTML = "<p style='text-align:center; color:#aaa; font-size:12px; margin-top: 20px;'>No saved emails.</p>";
     } else {
       history.forEach(item => {
         const card = document.createElement("div");
         card.className = "email-card";
-        
         const dateStr = document.createElement("p");
         dateStr.style.cssText = "font-size:10px; color:#9ca3af; margin:0 0 8px 0; font-weight: bold;";
         dateStr.innerText = `Generated on: ${item.date}`;
-        
         const textDiv = document.createElement("div");
         textDiv.className = "email-text";
         textDiv.innerText = item.text;
-        
         const copyWrapper = document.createElement("div");
         copyWrapper.className = "copy-wrapper";
-        
         const copyBtn = document.createElement("button");
         copyBtn.className = "action-btn";
-        copyBtn.innerText = "📋 Copy";
+        copyBtn.innerText = "Copy";
         copyBtn.onclick = () => {
             navigator.clipboard.writeText(item.text); 
-            copyBtn.innerText = "✅ Copied!"; 
+            copyBtn.innerText = "Copied!"; 
             copyBtn.classList.add("success");
-            setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
+            setTimeout(() => { copyBtn.innerText = "Copy"; copyBtn.classList.remove("success"); }, 2000); 
         };
-        
         copyWrapper.appendChild(copyBtn);
         card.appendChild(dateStr);
         card.appendChild(textDiv);
