@@ -8,13 +8,11 @@ document.getElementById('login-btn').onclick = () => {
       return;
     }
     
-    // Fetch user details from Google
     fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=' + token)
       .then(response => response.json())
       .then(userInfo => {
         currentUserEmail = userInfo.email;
         
-        // Update UI to show logged-in state
         document.getElementById('login-btn').style.display = 'none';
         document.getElementById('user-profile').style.display = 'flex';
         document.getElementById('user-email').innerText = userInfo.name;
@@ -29,7 +27,6 @@ document.getElementById('login-btn').onclick = () => {
 };
 
 document.getElementById('logout-btn').onclick = () => {
-  // Reset local state to visually log the user out
   currentUserEmail = null;
   document.getElementById('login-btn').style.display = 'block';
   document.getElementById('user-profile').style.display = 'none';
@@ -43,19 +40,16 @@ function saveEmailToHistory(emailText) {
   chrome.storage.local.get([storageKey], function(result) {
     let history = result[storageKey] || [];
     
-    // Add the new email to the front of the array with today's date
     history.unshift({ 
         text: emailText, 
         date: new Date().toLocaleDateString() 
     }); 
     
-    // Save it back to Chrome Storage
     chrome.storage.local.set({ [storageKey]: history });
   });
 }
 
 
-// --- 3. EMAIL GENERATION LOGIC (STREAMING) ---
 document.getElementById("generate").onclick = async () => {
   const name = document.getElementById("name").value;
   const desc = document.getElementById("desc").value;
@@ -75,7 +69,6 @@ document.getElementById("generate").onclick = async () => {
   slider.classList.add("show-results"); // Slide over immediately!
 
   try {
-    // Notice we are calling /stream now
     const res = await fetch(`${SERVER_URL}/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -86,7 +79,6 @@ document.getElementById("generate").onclick = async () => {
 
     generateBtn.innerText = "✨ Generating...";
 
-    // --- STREAM PARSING LOGIC ---
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     
@@ -101,36 +93,29 @@ document.getElementById("generate").onclick = async () => {
       let chunk = decoder.decode(value, { stream: true });
       chunk = chunk.replace(/\*\*/g, '').replace(/###/g, ''); // Clean markdown
 
-      // Check if this chunk contains our delimiter
       if (chunk.includes('|||')) {
         const parts = chunk.split('|||');
         
-        // Finish the current card
         currentEmailText += parts[0];
         currentCard.textDiv.innerText = currentEmailText.trim();
         allGeneratedEmails.push(currentEmailText.trim());
         
-        // Create the next card for the remaining text
         currentCard = createNewCardUI(outputContainer);
         currentEmailText = parts[1] || "";
         currentCard.textDiv.innerText = currentEmailText;
         
       } else {
-        // Just append text to the current card
         currentEmailText += chunk;
         currentCard.textDiv.innerText = currentEmailText.trim();
       }
     }
 
-    // When the stream finishes, save the very last email in the buffer
     if (currentEmailText.trim().length > 0) {
         allGeneratedEmails.push(currentEmailText.trim());
     }
 
-    // Save all to History 
     allGeneratedEmails.forEach(email => saveEmailToHistory(email));
 
-    // Reset button
     generateBtn.disabled = false;
     generateBtn.innerText = "Generate Emails";
 
@@ -142,7 +127,6 @@ document.getElementById("generate").onclick = async () => {
   }
 };
 
-// --- HELPER FUNCTION TO BUILD CARDS DYNAMICALLY ---
 function createNewCardUI(container) {
   const card = document.createElement("div");
   card.className = "email-card";
@@ -158,7 +142,7 @@ function createNewCardUI(container) {
   gmailBtn.innerText = "📤 Draft in Gmail";
   gmailBtn.onclick = () => {
     let subject = "New Email";
-    let bodyText = textDiv.innerText; // Pull directly from the DOM
+    let bodyText = textDiv.innerText;
     const subjectMatch = bodyText.match(/Subject:\s*(.*)/i);
     if (subjectMatch) { 
         subject = subjectMatch[1].trim(); 
@@ -184,10 +168,9 @@ function createNewCardUI(container) {
   card.appendChild(copyWrapper);
   container.appendChild(card);
   
-  return { card, textDiv }; // Return the text div so the stream can inject text into it
+  return { card, textDiv }; 
 }
 
-// --- 4. NAVIGATION & HISTORY RENDERING ---
 document.getElementById("back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-results");
 };
@@ -196,10 +179,9 @@ document.getElementById("history-back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-history");
 };
 
-// Load and Display the History Screen
 document.getElementById('view-history-btn').onclick = () => {
   const historyContainer = document.getElementById("history-container");
-  historyContainer.innerHTML = ""; // Clear old view
+  historyContainer.innerHTML = ""; 
   
   const storageKey = `history_${currentUserEmail}`;
   chrome.storage.local.get([storageKey], function(result) {
@@ -220,7 +202,6 @@ document.getElementById('view-history-btn').onclick = () => {
         textDiv.className = "email-text";
         textDiv.innerText = item.text;
         
-        // Add a simple copy button for history items too
         const copyWrapper = document.createElement("div");
         copyWrapper.className = "copy-wrapper";
         
@@ -246,7 +227,6 @@ document.getElementById('view-history-btn').onclick = () => {
       });
     }
     
-    // Slide to the History view
     document.getElementById("slider").classList.add("show-history");
   });
 };
