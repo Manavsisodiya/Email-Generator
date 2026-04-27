@@ -1,6 +1,7 @@
 const SERVER_URL = "https://email-generator-api-epbf.onrender.com"; 
 let currentUserEmail = null;
 
+// --- 1. AUTHENTICATION LOGIC ---
 document.getElementById('login-btn').onclick = () => {
   chrome.identity.getAuthToken({ interactive: true }, function(token) {
     if (chrome.runtime.lastError) {
@@ -34,6 +35,7 @@ document.getElementById('logout-btn').onclick = () => {
 };
 
 
+// --- 2. STORAGE LOGIC ---
 function saveEmailToHistory(emailText) {
   if (!currentUserEmail) return; 
   const storageKey = `history_${currentUserEmail}`;
@@ -50,6 +52,7 @@ function saveEmailToHistory(emailText) {
 }
 
 
+// --- 3. EMAIL GENERATION LOGIC (STREAMING & BUFFERING) ---
 document.getElementById("generate").onclick = async () => {
   const name = document.getElementById("name").value;
   const desc = document.getElementById("desc").value;
@@ -82,9 +85,9 @@ document.getElementById("generate").onclick = async () => {
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     
-    let currentEmailText = "";
-    let currentCard = createNewCardUI(outputContainer); // Helper function below
-    let allGeneratedEmails = []; // Store them to save to history later
+    let currentEmailText = ""; // The safe buffer
+    let currentCard = createNewCardUI(outputContainer); 
+    let allGeneratedEmails = []; 
 
     while (true) {
       const { done, value } = await reader.read();
@@ -93,27 +96,36 @@ document.getElementById("generate").onclick = async () => {
       let chunk = decoder.decode(value, { stream: true });
       chunk = chunk.replace(/\*\*/g, '').replace(/###/g, ''); // Clean markdown
 
-      if (chunk.includes('|||')) {
-        const parts = chunk.split('|||');
+      // 1. ADD TO BUFFER FIRST
+      currentEmailText += chunk;
+
+      // 2. CHECK THE ENTIRE BUFFER FOR THE DELIMITER
+      if (currentEmailText.includes('|||')) {
+        const parts = currentEmailText.split('|||');
         
-        currentEmailText += parts[0];
-        currentCard.textDiv.innerText = currentEmailText.trim();
-        allGeneratedEmails.push(currentEmailText.trim());
+        // Finish the current card with the text before the delimiter
+        currentCard.textDiv.innerText = parts[0].trim();
+        allGeneratedEmails.push(parts[0].trim());
         
+        // Create the next card for the remaining text
         currentCard = createNewCardUI(outputContainer);
-        currentEmailText = parts[1] || "";
+        
+        // Safely keep whatever came after the delimiter in our buffer
+        currentEmailText = parts.slice(1).join('|||'); 
         currentCard.textDiv.innerText = currentEmailText;
         
       } else {
-        currentEmailText += chunk;
+        // Normal typing effect: just update the current card
         currentCard.textDiv.innerText = currentEmailText.trim();
       }
     }
 
+    // When the stream finishes, save the very last email in the buffer
     if (currentEmailText.trim().length > 0) {
         allGeneratedEmails.push(currentEmailText.trim());
     }
 
+    // Save all to History
     allGeneratedEmails.forEach(email => saveEmailToHistory(email));
 
     generateBtn.disabled = false;
@@ -127,6 +139,7 @@ document.getElementById("generate").onclick = async () => {
   }
 };
 
+// --- HELPER FUNCTION TO BUILD CARDS DYNAMICALLY ---
 function createNewCardUI(container) {
   const card = document.createElement("div");
   card.className = "email-card";
@@ -171,6 +184,7 @@ function createNewCardUI(container) {
   return { card, textDiv }; 
 }
 
+// --- 4. NAVIGATION LOGIC ---
 document.getElementById("back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-results");
 };
@@ -179,6 +193,7 @@ document.getElementById("history-back-btn").onclick = () => {
   document.getElementById("slider").classList.remove("show-history");
 };
 
+// --- 5. LOAD HISTORY SCREEN ---
 document.getElementById('view-history-btn').onclick = () => {
   const historyContainer = document.getElementById("history-container");
   historyContainer.innerHTML = ""; 
