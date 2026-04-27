@@ -2,10 +2,35 @@
   "manifest_version": 3,
   "name": "AI Email Generator",
   "version": "2.0",
-  "description": "Generate emails instantly",
-  "action": {
-    "default_popup": "popup.html"
+  "description": "Generate emails instantly with AI.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
-  "permissions": ["storage"],
-  "host_permissions": ["http://localhost:5000/*"]
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open AI Email Generator",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://email-generator-api-epbf.onrender.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "657278265292-5rjs6hs9mj6b6rqb6j4oa0nmojt1e2cn.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  }
 }

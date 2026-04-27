@@ -6,130 +6,212 @@
 <title>AI Email Generator</title>
 
 <style>
+/* --- 1. THE BACKGROUND TRICK --- */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0b0f19;
+  background-color: #0b0f19;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.3), transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.3), transparent 50%);
   color: white;
-  width: 320px;
+  width: 360px; 
+  height: 480px; 
+  overflow: hidden; 
 }
 
+/* --- 2. THE GLASS CONTAINER --- */
 .container {
   padding: 16px;
-  border-radius: 16px;
-  background: rgba(20, 25, 40, 0.95);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  background: rgba(17, 24, 39, 0.6); 
+  border: 1px solid rgba(255, 255, 255, 0.08); 
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.header {
+/* --- 3. TOP NAVIGATION (AUTH & HISTORY) --- */
+.top-bar {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-}
-
-.icon {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  padding: 10px;
-  border-radius: 10px;
-}
-
-h2 {
-  margin: 0;
-  font-size: 16px;
-}
-
-p {
-  margin: 0;
-  font-size: 11px;
-  color: #aaa;
-}
-
-label {
   font-size: 12px;
-  margin-top: 10px;
-  display: block;
+  z-index: 10;
 }
 
-input, textarea, select {
-  width: 100%;
-  margin-top: 5px;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  background: #111827;
+.auth-btn, .history-btn {
+  background: rgba(255,255,255,0.1);
   color: white;
-  outline: none;
-}
-
-textarea {
-  resize: none;
-}
-
-button {
-  margin-top: 15px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  font-weight: bold;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 11px;
+  font-weight: bold;
 }
 
-button:hover {
-  transform: scale(1.03);
+.auth-btn:hover, .history-btn:hover { background: rgba(255,255,255,0.2); }
+
+#user-profile {
+  display: none;
+  align-items: center;
+  gap: 8px;
 }
 
-#output {
-  margin-top: 15px;
-  font-size: 12px;
-  white-space: pre-wrap;
+#user-avatar { width: 24px; height: 24px; border-radius: 50%; }
+#user-email { color: #d1d5db; }
+
+/* --- 4. THE SLIDING VIEW ARCHITECTURE --- */
+.view-slider {
+  position: relative;
+  width: 100%;
+  flex-grow: 1; /* Takes up remaining space below top bar */
 }
 
-.footer {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 10px;
-  color: #777;
+.view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.3, 1);
+  box-sizing: border-box;
 }
+
+/* View Default States */
+#form-view { transform: translateX(0); opacity: 1; visibility: visible; pointer-events: auto; }
+#results-view { transform: translateX(100%); opacity: 0; visibility: hidden; pointer-events: none; display: flex; flex-direction: column; }
+#history-view { transform: translateX(100%); opacity: 0; visibility: hidden; pointer-events: none; display: flex; flex-direction: column; }
+
+/* Triggers for sliding right */
+.show-results #form-view { transform: translateX(-100%); opacity: 0; visibility: hidden; pointer-events: none; }
+.show-results #results-view { transform: translateX(0); opacity: 1; visibility: visible; pointer-events: auto; }
+
+.show-history #form-view { transform: translateX(-100%); opacity: 0; visibility: hidden; pointer-events: none; }
+.show-history #history-view { transform: translateX(0); opacity: 1; visibility: visible; pointer-events: auto; }
+
+/* --- 5. UI ELEMENTS --- */
+.header { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+.icon { background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 8px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+.icon img { height: 24px !important; width: 24px !important; }
+h2 { margin: 0; font-size: 16px; font-weight: 600; }
+p { margin: 0; font-size: 11px; color: #9ca3af; }
+label { font-size: 12px; margin-top: 10px; display: block; color: #d1d5db; }
+
+input, textarea, select {
+  width: 100%; margin-top: 5px; padding: 10px; border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(0, 0, 0, 0.3);
+  color: white; font-family: inherit; font-size: 12px; outline: none; box-sizing: border-box; transition: border 0.2s;
+}
+input:focus, textarea:focus, select:focus { border: 1px solid rgba(59, 130, 246, 0.5); }
+textarea { resize: none; }
+
+button#generate {
+  margin-top: 20px; width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; font-family: inherit;
+  font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+button#generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); }
+button#generate:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+/* --- 6. RESULTS & HISTORY ELEMENTS --- */
+.results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+
+.nav-back-btn {
+  background: rgba(255, 255, 255, 0.1); color: white; border: none; padding: 6px 12px;
+  border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.nav-back-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+#output-container, #history-container {
+  flex-grow: 1; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 12px;
+}
+
+#output-container::-webkit-scrollbar, #history-container::-webkit-scrollbar { width: 4px; }
+#output-container::-webkit-scrollbar-track, #history-container::-webkit-scrollbar-track { background: transparent; }
+#output-container::-webkit-scrollbar-thumb, #history-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.email-card { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 14px; }
+.email-text { font-family: inherit; font-size: 12px; line-height: 1.5; color: #e5e7eb; white-space: pre-wrap; margin-bottom: 12px; }
+
+.copy-wrapper { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.action-btn {
+  background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 11px;
+  cursor: pointer; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+}
+.action-btn:hover { background: rgba(59, 130, 246, 0.3); color: white; }
+.action-btn.success { background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+
+.footer { margin-top: 15px; text-align: center; font-size: 10px; color: #6b7280; }
 </style>
-
 </head>
 
 <body>
 <div class="container">
-  
-  <div class="header">
-    <div class="icon">✉️</div>
-    <div>
-      <h2>AI Email Generator</h2>
-      <p>Craft perfect emails instantly</p>
+
+  <div class="top-bar">
+    <div id="auth-section">
+      <button id="login-btn" class="auth-btn">Login with Google</button>
+      <div id="user-profile">
+        <img id="user-avatar" src="" alt="avatar">
+        <span id="user-email"></span>
+        <button id="logout-btn" class="auth-btn" style="margin-left: 5px;">Logout</button>
+      </div>
     </div>
+    <button id="view-history-btn" class="history-btn" style="display:none;">📂 Your Emails</button>
   </div>
 
-  <label>Receiver Name</label>
-  <input id="name" placeholder="John Smith"/>
+  <div class="view-slider" id="slider">
+    
+    <div id="form-view" class="view">
+      <div class="header">
+        <div class="icon"><img src="./icon48.png"/></div>
+        <div>
+          <h2>AI Email Generator</h2>
+          <p>Craft perfect emails instantly</p>
+        </div>
+      </div>
+      <label>Receiver Name</label>
+      <input id="name" placeholder="John Smith"/>
+      <label>Describe your email</label>
+      <textarea id="desc" rows="3" placeholder="I want to follow up regarding my recent job application..."></textarea>
+      <label>Tone</label>
+      <select id="tone">
+        <option>Professional</option>
+        <option>Casual</option>
+        <option>Friendly</option>
+        <option>Persuasive</option>
+      </select>
+      <button id="generate">Generate Emails</button>
+      <div class="footer">Powered by AI • Built with precision</div>
+    </div>
 
-  <label>Describe your email</label>
-  <textarea id="desc" rows="3" placeholder="I want to follow up..."></textarea>
+    <div id="results-view" class="view">
+      <div class="results-header">
+        <button id="back-btn" class="nav-back-btn">← Back</button>
+        <h2 style="font-size: 14px;">Your Emails</h2>
+      </div>
+      <div id="output-container"></div>
+    </div>
 
-  <label>Tone</label>
-  <select id="tone">
-    <option>Professional</option>
-    <option>Casual</option>
-    <option>Friendly</option>
-  </select>
+    <div id="history-view" class="view">
+      <div class="results-header">
+        <button id="history-back-btn" class="nav-back-btn">← Back</button>
+        <h2 style="font-size: 14px;">Saved Emails</h2>
+      </div>
+      <div id="history-container"></div>
+    </div>
 
-  <button id="generate">Generate Emails</button>
-
-  <div id="output"></div>
-
-  <div class="footer">
-    Powered by AI • Built with precision
   </div>
 </div>
 
