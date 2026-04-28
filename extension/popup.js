@@ -52,7 +52,7 @@ document.getElementById("generate").onclick = async () => {
   }
 
   generateBtn.disabled = true; 
-  generateBtn.innerText = "Generating... Please wait";
+  generateBtn.innerText = "⏳ Generating... Please wait";
 
   try {
     const res = await fetch(`${SERVER_URL}/generate`, {
@@ -69,10 +69,12 @@ document.getElementById("generate").onclick = async () => {
     outputContainer.innerHTML = ""; 
     slider.classList.add("show-results");
 
-    emailsArray.forEach((emailText) => {
-        saveEmailToHistory(emailText);
-        const cardUI = createNewCardUI(outputContainer, emailText);
-        typeOutText(cardUI.textDiv, emailText, 10);
+    // THIS IS THE FIXED SECTION THAT HANDLES THE JSON OBJECTS
+    emailsArray.forEach((emailObj) => {
+        const fullText = "Subject: " + emailObj.subject + "\n\n" + emailObj.body;
+        saveEmailToHistory(fullText);
+        const cardUI = createNewCardUI(outputContainer, fullText, emailObj.subject, emailObj.body);
+        typeOutText(cardUI.textDiv, fullText, 10);
     });
 
     generateBtn.disabled = false;
@@ -98,7 +100,7 @@ function typeOutText(element, fullText, speed) {
     type();
 }
 
-function createNewCardUI(container, fullText) {
+function createNewCardUI(container, fullText, rawSubject, rawBody) {
   const card = document.createElement("div");
   card.className = "email-card";
   const textDiv = document.createElement("div");
@@ -108,27 +110,19 @@ function createNewCardUI(container, fullText) {
 
   const gmailBtn = document.createElement("button");
   gmailBtn.className = "action-btn";
-  gmailBtn.innerText = "Draft in Gmail";
+  gmailBtn.innerText = "📤 Draft in Gmail";
   gmailBtn.onclick = () => {
-    let subject = "New Email";
-    let bodyText = fullText; 
-    const subjectMatch = bodyText.match(/Subject:\s*(.*)/i);
-    if (subjectMatch) { 
-        subject = subjectMatch[1].trim(); 
-        bodyText = bodyText.replace(subjectMatch[0], '').trim(); 
-    }
-    bodyText = bodyText.replace(/^Body:\s*/i, '').trim();
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`, '_blank');
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(rawSubject)}&body=${encodeURIComponent(rawBody)}`, '_blank');
   };
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "action-btn";
-  copyBtn.innerText = "Copy";
+  copyBtn.innerText = "📋 Copy";
   copyBtn.onclick = () => { 
       navigator.clipboard.writeText(fullText); 
-      copyBtn.innerText = "Copied!"; 
+      copyBtn.innerText = "✅ Copied!"; 
       copyBtn.classList.add("success");
-      setTimeout(() => { copyBtn.innerText = "Copy"; copyBtn.classList.remove("success"); }, 2000); 
+      setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
   };
 
   copyWrapper.appendChild(gmailBtn);
@@ -169,12 +163,12 @@ document.getElementById('view-history-btn').onclick = () => {
         copyWrapper.className = "copy-wrapper";
         const copyBtn = document.createElement("button");
         copyBtn.className = "action-btn";
-        copyBtn.innerText = "Copy";
+        copyBtn.innerText = "📋 Copy";
         copyBtn.onclick = () => {
             navigator.clipboard.writeText(item.text); 
-            copyBtn.innerText = "Copied!"; 
+            copyBtn.innerText = "✅ Copied!"; 
             copyBtn.classList.add("success");
-            setTimeout(() => { copyBtn.innerText = "Copy"; copyBtn.classList.remove("success"); }, 2000); 
+            setTimeout(() => { copyBtn.innerText = "📋 Copy"; copyBtn.classList.remove("success"); }, 2000); 
         };
         copyWrapper.appendChild(copyBtn);
         card.appendChild(dateStr);
