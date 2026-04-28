@@ -20,19 +20,13 @@ app.post("/generate", async (req, res) => {
   const { name, desc, tone } = req.body;
 
   try {
-    const prompt = `
-Write exactly 3 distinct, professional email replies based on:
+    const prompt = `Write exactly 3 distinct email replies based on the following:
 Receiver: ${name}
 Context: ${desc}
 Tone: ${tone}
 
-STRICT RULES:
-1. Return the output ONLY as a valid JSON array of 3 strings.
-2. Each string must contain a Subject line and the Email Body.
-3. Use \\n for new lines within the strings.
-4. DO NOT include any text outside of the JSON array.
-5. DO NOT use markdown code blocks like \`\`\`json.
-`;
+You must return the output STRICTLY as a JSON array of objects.
+Each object must have exactly two keys: "subject" and "body".`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -46,8 +40,8 @@ STRICT RULES:
     res.json({ result: emailArray });
 
   } catch (err) {
-    console.error("BACKEND ERROR:", err);
-    res.status(500).json({ error: "Generation failed" });
+    console.error(err);
+    res.status(500).json({ error: "Server crashed", details: err.message });
   }
 });
 
